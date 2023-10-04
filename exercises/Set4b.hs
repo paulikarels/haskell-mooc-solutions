@@ -21,7 +21,9 @@ import Mooc.Todo
 countNothings :: [Maybe a] -> Int
 countNothings xs = foldr countHelper 0 xs
 
-countHelper = todo
+countHelper :: Maybe a -> Int -> Int
+countHelper Nothing x = x + 1
+countHelper _ x       = x
 
 ------------------------------------------------------------------------------
 -- Ex 2: myMaximum with a fold. Just like in the previous exercise,
@@ -32,10 +34,13 @@ countHelper = todo
 --   myMaximum [1,3,2]  ==>  3
 
 myMaximum :: [Int] -> Int
-myMaximum [] = 0
+myMaximum []     = 0
 myMaximum (x:xs) = foldr maxHelper x xs
 
-maxHelper = todo
+maxHelper :: Int -> Int -> Int
+maxHelper x y 
+    | x < y      = y
+    | otherwise  = x
 
 ------------------------------------------------------------------------------
 -- Ex 3: compute the sum and length of a list with a fold. Define
@@ -52,8 +57,11 @@ maxHelper = todo
 sumAndLength :: [Double] -> (Double,Int)
 sumAndLength xs = foldr slHelper slStart xs
 
-slStart = todo
-slHelper = todo
+slStart :: (Double, Int)
+slStart = (0.0, 0)
+
+slHelper :: Double -> (Double, Int) -> (Double, Int)
+slHelper x (sum, length) = (sum + x, length + 1)
 
 ------------------------------------------------------------------------------
 -- Ex 4: implement concat with a fold. Define concatHelper and
@@ -67,8 +75,12 @@ slHelper = todo
 myConcat :: [[a]] -> [a]
 myConcat xs = foldr concatHelper concatStart xs
 
-concatStart = todo
-concatHelper = todo
+concatStart = []
+
+concatHelper :: [a] -> [a] -> [a]
+concatHelper x [] = x
+concatHelper x xs = x ++ xs
+
 
 ------------------------------------------------------------------------------
 -- Ex 5: get all occurrences of the largest number in a list with a
@@ -76,13 +88,19 @@ concatHelper = todo
 --
 -- Examples:
 --   largest [] ==> []
---   largest [1,3,2] ==> [3]
---   largest [1,3,2,3] ==> [3,3]
+--   largest [1,3,2] ==> []
+--   largest [1,3,2,3] ==>3 [3,3]
 
 largest :: [Int] -> [Int]
 largest xs = foldr largestHelper [] xs
 
-largestHelper = todo
+largestHelper :: Int -> [Int] -> [Int]
+largestHelper x [] = [x]
+largestHelper x xs  
+    | x > head xs   = [x]
+    | elem x xs     = x : xs
+    | otherwise     = xs
+
 
 
 ------------------------------------------------------------------------------
@@ -98,7 +116,10 @@ largestHelper = todo
 myHead :: [a] -> Maybe a
 myHead xs = foldr headHelper Nothing xs
 
-headHelper = todo
+headHelper :: a -> Maybe a -> Maybe a
+headHelper x _  = Just x
+
+
 
 ------------------------------------------------------------------------------
 -- Ex 7: get the last element of a list with a fold. Define lasthelper
@@ -113,5 +134,7 @@ headHelper = todo
 myLast :: [a] -> Maybe a
 myLast xs = foldr lastHelper Nothing xs
 
-lastHelper = todo
+lastHelper :: a -> Maybe a -> Maybe a
+lastHelper x Nothing  = Just x
+lastHelper _ xs       = xs
 

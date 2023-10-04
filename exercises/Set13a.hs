@@ -45,19 +45,23 @@ readNames s =
 -- (NB! There are obviously other corner cases like the inputs " " and
 -- "a b c", but you don't need to worry about those here)
 split :: String -> Maybe (String,String)
-split = todo
+split str = do
+  s <- elemIndex ' ' str
+  return (take s str, drop (s + 1) str)
+
 
 -- checkNumber should take a pair of two strings and return them
 -- unchanged if they don't contain numbers. Otherwise Nothing is
 -- returned.
 checkNumber :: (String, String) -> Maybe (String, String)
-checkNumber = todo
+checkNumber (x, y) = if not (any isDigit x) && not (any isDigit y) then Just (x, y) else Nothing
+
 
 -- checkCapitals should take a pair of two strings and return them
 -- unchanged if both start with a capital letter. Otherwise Nothing is
 -- returned.
 checkCapitals :: (String, String) -> Maybe (String, String)
-checkCapitals (for,sur) = todo
+checkCapitals (for,sur) = if isUpper (head (for)) && isUpper (head (sur)) then Just (for, sur) else Nothing
 
 ------------------------------------------------------------------------------
 -- Ex 2: Given a list of players and their scores (as [(String,Int)]),
@@ -84,8 +88,11 @@ checkCapitals (for,sur) = todo
 --     ==> Just "a"
 
 winner :: [(String,Int)] -> String -> String -> Maybe String
-winner scores player1 player2 = todo
+winner scores player1 player2 = 
+  if lookup player1 scores == Nothing || lookup player2 scores == Nothing then Nothing else 
+    if lookup player1 scores >= lookup player2 scores then Just player1 else Just player2
 
+-- (lookup player1 scores > lookup player2 scores then Just player1 else Just player2)
 ------------------------------------------------------------------------------
 -- Ex 3: given a list of indices and a list of values, return the sum
 -- of the values in the given indices. You should fail if any of the
@@ -102,7 +109,12 @@ winner scores player1 player2 = todo
 --    Nothing
 
 selectSum :: Num a => [a] -> [Int] -> Maybe a
-selectSum xs is = todo
+selectSum xs = fmap sum . mapM (safeIndex xs)
+
+safeIndex :: [a] -> Int -> Maybe a
+safeIndex xs n
+  | n >= 0 && n < length xs = Just (xs !! n)
+  | otherwise = Nothing
 
 ------------------------------------------------------------------------------
 -- Ex 4: Here is the Logger monad from the course material. Implement
@@ -136,7 +148,13 @@ instance Applicative Logger where
   (<*>) = ap
 
 countAndLog :: Show a => (a -> Bool) -> [a] -> Logger Int
-countAndLog = todo
+countAndLog f [] = return 0
+countAndLog f (x : xs)  
+  | f x = do
+      msg (show x)
+      s <- countAndLog f xs
+      return (s + 1)
+  | otherwise = countAndLog f xs
 
 ------------------------------------------------------------------------------
 -- Ex 5: You can find the Bank and BankOp code from the course
@@ -153,7 +171,9 @@ exampleBank :: Bank
 exampleBank = (Bank (Map.fromList [("harry",10),("cedric",7),("ginny",1)]))
 
 balance :: String -> BankOp Int
-balance accountName = todo
+balance accountName = BankOp bank
+  where
+    bank (Bank x) = (Map.findWithDefault 0 accountName x, Bank x)
 
 ------------------------------------------------------------------------------
 -- Ex 6: Using the operations balance, withdrawOp and depositOp, and
@@ -171,7 +191,7 @@ balance accountName = todo
 --     ==> ((),Bank (fromList [("cedric",7),("ginny",1),("harry",10)]))
 
 rob :: String -> String -> BankOp ()
-rob from to = todo
+rob from to = balance from +> withdrawOp from +> depositOp to
 
 ------------------------------------------------------------------------------
 -- Ex 7: using the State monad, write the operation `update` that first
@@ -183,7 +203,7 @@ rob from to = todo
 --    ==> ((),7)
 
 update :: State Int ()
-update = todo
+update = modify (succ . (2 *))
 
 ------------------------------------------------------------------------------
 -- Ex 8: Checking that parentheses are balanced with the State monad.
@@ -211,7 +231,14 @@ update = todo
 --   parensMatch "(()))("      ==> False
 
 paren :: Char -> State Int ()
-paren = todo
+paren c = do
+  y <- get
+  if y == -1 
+    then return ()
+    else helper c 
+  where
+    helper '(' = modify (+ 1)
+    helper s   = modify (\x -> x-1)
 
 parensMatch :: String -> Bool
 parensMatch s = count == 0
@@ -242,7 +269,12 @@ parensMatch s = count == 0
 -- PS. The order of the list of pairs doesn't matter
 
 count :: Eq a => a -> State [(a,Int)] ()
-count x = todo
+count = modify . helper 
+  where
+    helper x []   = [(x, 1)]
+    helper x ((y, n):xs)
+      | x == y    = (x, n + 1):xs
+      | otherwise = (y, n):helper x xs
 
 ------------------------------------------------------------------------------
 -- Ex 10: Implement the operation occurrences, which
@@ -264,4 +296,5 @@ count x = todo
 --    ==> (4,[(2,1),(3,1),(4,1),(7,1)])
 
 occurrences :: (Eq a) => [a] -> State [(a,Int)] Int
-occurrences xs = todo
+occurrences  =  (>> fmap length get) . (mapM  count)
+
